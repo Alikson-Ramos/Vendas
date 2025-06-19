@@ -320,9 +320,14 @@ return [
             'url' => 'clientes',
             'icon' => 'fa-solid fa-building-user',
         ],
-                [
+        [
             'text' => 'Produtos',
             'url' => 'produtos',
+            'icon' => 'fa-solid fa-box',
+        ],
+        [
+            'text' => 'Vendas',
+            'url' => 'vendas',
             'icon' => 'fa-solid fa-box',
         ],
     ],

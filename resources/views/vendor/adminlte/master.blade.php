@@ -50,6 +50,9 @@
         @endswitch
     @endif
 
+    {{-- Icons Fontawesome --}}
+    <link rel="stylesheet" href="{{asset('fontawesome/css/all.min.css')}}">
+
     {{-- Extra Configured Plugins Stylesheets --}}
     @include('adminlte::plugins', ['type' => 'css'])
 

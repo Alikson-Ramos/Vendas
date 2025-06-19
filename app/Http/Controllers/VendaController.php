@@ -19,12 +19,12 @@ class VendaController extends Controller
         return view('vendas.index', compact('vendas'));
     }
 
-    public function create()
-    {
-        $clientes = Cliente::orderBy('nome')->get();
-        $produtos = Produto::orderBy('nome')->get();
-        return view('vendas.create', compact('clientes', 'produtos'));
-    }
+public function create()
+{
+    $clientes = \App\Models\Cliente::orderBy('nome')->get();
+    $produtos = \App\Models\Produto::select('id', 'nome', 'preco')->orderBy('nome')->get();
+    return view('vendas.create', compact('clientes', 'produtos'));
+}
 
     public function store(Request $request)
     {

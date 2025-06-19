@@ -1,20 +1,19 @@
 @extends('adminlte::page')
 
-@section('title', 'Nova Venda')
+@section('title', 'Editar Venda')
 
 @section('content_header')
-    <div class="container-fluid">
-        <h1>Nova Venda</h1>
-    </div>
+    <h1>Editar Venda #{{ $venda->id }}</h1>
 @stop
 
 @section('content')
 <div class="card">
     <div class="card-header">
-        <h3 class="card-title"><i class="fa-solid fa-cash-register" style="margin-right: 5px;"></i> Nova Venda</h3>
+        <b>Venda #{{ $venda->id }}</b>
     </div>
-    <form action="{{ route('vendas.store') }}" method="POST" id="form-venda">
+    <form action="{{ route('vendas.update', $venda->id) }}" method="POST" id="form-venda">
         @csrf
+        @method('PUT')
         <div class="card-body">
             <div class="row mb-4">
                 <div class="col-md-6">
@@ -24,7 +23,7 @@
                     <select name="cliente_id" class="form-control">
                         <option value="">-- Selecione --</option>
                         @foreach ($clientes as $cliente)
-                            <option value="{{ $cliente->id }}" @if(old('cliente_id') == $cliente->id) selected @endif>{{ $cliente->nome }}</option>
+                            <option value="{{ $cliente->id }}" @if(old('cliente_id', $venda->cliente_id) == $cliente->id) selected @endif>{{ $cliente->nome }}</option>
                         @endforeach
                     </select>
                     @error('cliente_id')
@@ -37,9 +36,9 @@
                         <span style="color:#e74a3b;">*</span>
                     </label>
                     <select name="forma_pagamento" class="form-control" id="forma_pagamento" required>
-                        <option value="Dinheiro">Dinheiro</option>
-                        <option value="Cartão">Cartão</option>
-                        <option value="Parcelado">Parcelado</option>
+                        <option value="Dinheiro" @if(old('forma_pagamento', $venda->forma_pagamento) == 'Dinheiro') selected @endif>Dinheiro</option>
+                        <option value="Cartão" @if(old('forma_pagamento', $venda->forma_pagamento) == 'Cartão') selected @endif>Cartão</option>
+                        <option value="Parcelado" @if(old('forma_pagamento', $venda->forma_pagamento) == 'Parcelado') selected @endif>Parcelado</option>
                     </select>
                 </div>
             </div>
@@ -56,24 +55,26 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="item-row">
-                        <td>
-                            <select name="itens[0][produto_id]" class="form-control produto-select" required>
-                                <option value="">Selecione</option>
-                                @foreach ($produtos as $produto)
-                                    <option value="{{ $produto->id }}">{{ $produto->nome }}</option>
-                                @endforeach
-                            </select>
-                        </td>
-                        <td><input type="number" min="1" name="itens[0][quantidade]" class="form-control quantidade" value="1" required></td>
-                        <td><input type="text" name="itens[0][preco_unitario]" class="form-control preco-unitario" value="0,00" required></td>
-                        <td><input type="text" class="form-control total-item" value="0,00" readonly></td>
-                        <td>
-                            <button type="button" class="btn btn-sm btn-danger remover-item" title="Remover">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
+                    @foreach ($venda->itens as $idx => $item)
+                        <tr class="item-row">
+                            <td>
+                                <select name="itens[{{ $idx }}][produto_id]" class="form-control produto-select" required>
+                                    <option value="">Selecione</option>
+                                    @foreach ($produtos as $produto)
+                                        <option value="{{ $produto->id }}" @if($item->produto_id == $produto->id) selected @endif>{{ $produto->nome }}</option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <td><input type="number" min="1" name="itens[{{ $idx }}][quantidade]" class="form-control quantidade" value="{{ $item->quantidade }}" required></td>
+                            <td><input type="text" name="itens[{{ $idx }}][preco_unitario]" class="form-control preco-unitario" value="{{ number_format($item->preco_unitario, 2, ',', '.') }}" required></td>
+                            <td><input type="text" class="form-control total-item" value="{{ number_format($item->preco_total, 2, ',', '.') }}" readonly></td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-danger remover-item" title="Remover">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    @endforeach
                 </tbody>
             </table>
             <button type="button" class="btn btn-sm btn-success mb-3" id="adicionar-item">
@@ -85,11 +86,11 @@
                     <strong>Total da Venda:</strong>
                 </div>
                 <div class="col-md-6 text-right">
-                    <input type="text" name="total" id="total-venda" class="form-control text-right" value="0,00" readonly>
+                    <input type="text" name="total" id="total-venda" class="form-control text-right" value="{{ number_format($venda->total, 2, ',', '.') }}" readonly>
                 </div>
             </div>
 
-            <div id="parcelamento" style="display:none; margin-top:30px;">
+            <div id="parcelamento" style="display:{{ $venda->forma_pagamento == 'Parcelado' ? 'block' : 'none' }}; margin-top:30px;">
                 <hr>
                 <h5><i class="fas fa-file-invoice-dollar" style="color:#4e73df;"></i> Parcelamento</h5>
                 <div class="row mb-2">
@@ -97,7 +98,7 @@
                         <label for="qtd_parcelas" class="form-label">Qtd. de Parcelas</label>
                         <select class="form-control" id="qtd_parcelas">
                             @for($i=2; $i<=12; $i++)
-                                <option value="{{$i}}">{{$i}}x</option>
+                                <option value="{{$i}}" @if(isset($venda->parcelas[0]) && count($venda->parcelas) == $i) selected @endif>{{$i}}x</option>
                             @endfor
                         </select>
                     </div>
@@ -111,14 +112,24 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{-- Preenchido via JS --}}
+                        @if($venda->forma_pagamento == 'Parcelado')
+                            @foreach ($venda->parcelas as $idx => $parcela)
+                                <tr>
+                                    <td>{{ $parcela->numero }}
+                                        <input type="hidden" name="parcelas[{{ $idx }}][numero]" value="{{ $parcela->numero }}">
+                                    </td>
+                                    <td><input type="date" name="parcelas[{{ $idx }}][data_vencimento]" class="form-control" value="{{ $parcela->data_vencimento }}" required></td>
+                                    <td><input type="text" name="parcelas[{{ $idx }}][valor]" class="form-control" value="{{ number_format($parcela->valor, 2, ',', '.') }}" required></td>
+                                </tr>
+                            @endforeach
+                        @endif
                     </tbody>
                 </table>
             </div>
         </div>
         <div class="card-footer text-right">
-            <a href="{{ route('vendas.index') }}" class="btn btn-default">Cancelar</a>
-            <button type="submit" class="btn btn-primary">Salvar Venda</button>
+            <a href="{{ route('vendas.show', $venda->id) }}" class="btn btn-default">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
         </div>
     </form>
 </div>
@@ -126,14 +137,12 @@
 
 @section('js')
 <script>
-    // Array associativo id => preco
     var precosProdutos = {
         @foreach($produtos as $produto)
             "{{ $produto->id }}": "{{ number_format($produto->preco, 2, ',', '') }}",
         @endforeach
     };
 
-    // Ao trocar o produto, atualiza o campo de preço unitário
     $(document).on('change', '.produto-select', function(){
         let idProduto = $(this).val();
         let preco = precosProdutos[idProduto] || "0,00";
@@ -220,7 +229,6 @@
         $('#tabela-parcelas tbody').html(tbody);
     }
 
-    // Máscara simples para preço com vírgula
     $(document).on('input', '.preco-unitario', function(){
         let v = $(this).val().replace(/\D/g, '');
         v = (v/100).toFixed(2)+'';

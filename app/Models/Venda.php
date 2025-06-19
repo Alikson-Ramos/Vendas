@@ -23,14 +23,14 @@ class Venda extends Model
         return $this->belongsTo(User::class);
     }
 
-    // public function itens()
-    // {
-    //     return $this->hasMany(ItemVenda::class);
-    // }
+     public function itens()
+     {
+         return $this->hasMany(ItemVenda::class);
+     }
 
-    // public function parcelas()
-    // {
-    //     return $this->hasMany(Parcela::class);
-    // }
+     public function parcelas()
+     {
+         return $this->hasMany(Parcela::class);
+     }
 }
 

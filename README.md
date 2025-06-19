@@ -113,14 +113,14 @@ php artisan adminlte:install --only=main_views --force
 ```php
 @extends('adminlte::page')
 
-@section('title', 'System | HAGUEN')
+@section('title', 'System | Vendas')
 
 @section('content_header')
     <h1>Gerenciador de Documentos</h1>
 @stop
 
 @section('content')
-    <p>Gerenciador de Documentos HAGUEN.</p>
+    <p>Gerenciador de Documentos Vendas.</p>
 @stop
 
 @section('css')

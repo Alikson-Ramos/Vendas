@@ -13,6 +13,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             ClientesTableSeeder::class, // php artisan db:seed --class=ClientesTableSeeder
+            ProdutosTableSeeder::class, // php artisan db:seed --class=ProdutosTableSeeder
+
         ]);
     }
 }

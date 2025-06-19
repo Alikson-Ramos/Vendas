@@ -318,7 +318,12 @@ return [
         [
             'text' => 'Clientes',
             'url' => 'clientes',
-            'icon' => 'fa-solid fa-chart-pie',
+            'icon' => 'fa-solid fa-building-user',
+        ],
+                [
+            'text' => 'Produtos',
+            'url' => 'produtos',
+            'icon' => 'fa-solid fa-box',
         ],
     ],
 

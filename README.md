@@ -1,61 +1,191 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PROJETO Sistema de Vendas
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Sobre o Projeto
 
-## About Laravel
+Sistema simples e robusto para gerenciamento de vendas de produtos, com cadastro de clientes, produtos e vendedores, controle de formas de pagamento (à vista, cartão, parcelado), geração automática de parcelas, filtros inteligentes.
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Requisitos do Projeto
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Ubuntu 22.04 LTS (ou outro SO compatível)
+- Node.js v20.12.2+
+- NPM v10.5.2+
+- Laravel v10.48.10+
+- AdminLTE 3.8.6+
+- PHP v8.3.6+
+- MySQL v8.0.33+
+- Composer v2.7.4+
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
+## Instalação
 
-## Learning Laravel
+### Clonando o repositório
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```bash
+git clone https://github.com/Alikson-Ramos/Vendas.git
+cd Vendas
+```
+## Instalar dependências PHP e Node
+```
+composer install
+npm install
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Instalar Laravel
+Documentação: <a href="https://laravel.com/docs/12.x"> ref : LARAVEL </a>
+ ```
+composer create-project laravel/laravel vendas
+```
+- Permissão pasta storage
+```
+sudo chmod 777 -R storage/
+```
+## Base de dados MySql
+- No arquivo .env
+```
+DB_CONNECTION=mysql 
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=NomeDaBaseDeDados
+DB_USERNAME=UsuarioDaBase
+DB_PASSWORD=SenhaDaBase
+```
+## Gere a key do Laravel:
+```
+php artisan key:generate
+```
+## Instalando Migrations
+```
+php artisan migrate:install
+```
+```
+php artisan migrate:status
+```
+```
+php artisan migrate
+```
+## AdminLTE 3
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Documentação: <a href="https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Installation"> ref : Doc AdminLTE</a>
 
-## Laravel Sponsors
+- Baixar pacote
+```bash
+composer require jeroennoten/laravel-adminlte
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- Instalar Dependencia
+```bash
+php artisan adminlte:install
+```
 
-### Premium Partners
+- Definir Autenticação
+```bash
+composer require laravel/ui
+php artisan ui bootstrap --auth
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- Instalar NPM no Projeto
+```bash
+npm install && npm run dev
+```
 
-## Contributing
+- Reemplazar Views
+```bash
+php artisan adminlte:install --only=auth_views
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- Realizar ATUALIZAÇÃO de versão
+```bash
+composer update jeroennoten/laravel-adminlte
+```
 
-## Code of Conduct
+- Instalar UPDATE
+```bash
+php artisan adminlte:update
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- Instalação de Backup AdminLTE (local)
+```bash
+php artisan adminlte:install --only=main_views --force
+```
+### HOME interface
 
-## Security Vulnerabilities
+```php
+@extends('adminlte::page')
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+@section('title', 'System | HAGUEN')
 
-## License
+@section('content_header')
+    <h1>Gerenciador de Documentos</h1>
+@stop
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+@section('content')
+    <p>Gerenciador de Documentos HAGUEN.</p>
+@stop
+
+@section('css')
+    {{-- Add here extra stylesheets --}}
+    {{-- <link rel="stylesheet" href="/css/admin_custom.css"> --}}
+@stop
+
+@section('js')
+    <script> console.log("Hi, I'm using the Laravel-AdminLTE package!"); </script>
+@stop
+
+```
+
+## Instalar rota da API
+```
+php artisan install:api
+```
+
+## FONTAWESOME ICONS
+
+Referencia: <a href="https://fontawesome.com/download"> ref : fontawesome</a>
+- Procurar Free For WEB
+- Fazer Download do Pacote em ZIP.
+- Descompactar
+- Cópiar para a PASTA public do projeto.
+- Editar a referência no arquivo BLADE MASTER
+Caminho: resource/views/vendor/adminlte/master.blade.php
+```php
+    {{-- Icons Fontawesome --}}
+    <link rel="stylesheet" href="{{asset('fontawesome/css/all.min.css')}}">
+```
+
+## Alterar Idioma
+```
+    'timezone' => 'America/Sao_Paulo',
+    'locale' => 'pt-br',
+```
+
+## Seeders
+
+```bash
+php artisan db:seed --class=DatabaseSeeder
+```
+
+## Configuração do Sweetalert2
+```php
+        'Sweetalert2' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    // 'location' => '//cdn.jsdelivr.net/npm/sweetalert2@8',
+                    'location' => 'https://cdn.jsdelivr.net/npm/sweetalert2@11',
+                ],
+            ],
+```
+
+## Tela de pedidos
+![image](https://github.com/user-attachments/assets/14c126da-e993-4d21-b9aa-35a341091cd4)
+
+## Alteração de nº de parcelas e atualização de valores automaticos
+![image](https://github.com/user-attachments/assets/2a27ba45-4519-420f-a170-3f1180ef1113)
+
+
+
+## Desenvolvido por Alikson Ramos.
+

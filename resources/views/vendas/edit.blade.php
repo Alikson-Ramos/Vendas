@@ -16,6 +16,16 @@
     <form action="{{ route('vendas.update', $venda->id) }}" method="POST" id="form-venda">
         @csrf @method('PUT')
         <div class="card-body">
+            @if($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="row mb-4">
                 <div class="col-md-6">
                     <label class="form-label"><i class="fas fa-user text-primary"></i> Cliente (opcional)</label>
@@ -180,91 +190,86 @@ $('#forma_pagamento').change(function(){
 function gerarParcelas() {
     let qtd = +$('#qtd_parcelas').val();
     let total = parseFloat($('#total-venda').val().replace(/\./g, '').replace(',', '.')) || 0;
-
     let valorBase = Math.floor((total / qtd) * 100) / 100;
     let resto = Math.round((total - valorBase * qtd) * 100) / 100;
-
     let hoje = new Date();
     let html = '';
     for (let i = 0; i < qtd; i++) {
         let valorParcela = valorBase;
-        if (i === qtd - 1) {
-            valorParcela += resto;
-        }
+        if (i === qtd - 1) valorParcela += resto;
         let dataVencimento = new Date(hoje);
         dataVencimento.setMonth(hoje.getMonth() + i + 1);
         let dataStr = dataVencimento.toISOString().split('T')[0];
         html += `<tr>
-                    <td>${i+1}<input type="hidden" name="parcelas[${i}][numero]" value="${i+1}"></td>
-                    <td><input type="date" name="parcelas[${i}][data_vencimento]" class="form-control" value="${dataStr}"></td>
-                    <td><input type="text" name="parcelas[${i}][valor]" class="form-control" value="${valorParcela.toFixed(2).replace('.', ',')}"></td>
-                </tr>`;
+            <td>${i+1}<input type="hidden" name="parcelas[${i}][numero]" value="${i+1}"></td>
+            <td><input type="date" name="parcelas[${i}][data_vencimento]" class="form-control" value="${dataStr}"></td>
+            <td><input type="text" name="parcelas[${i}][valor]" class="form-control" value="${valorParcela.toFixed(2).replace('.', ',')}"></td>
+        </tr>`;
     }
     $('#tabela-parcelas tbody').html(html);
 }
 
 $('#qtd_parcelas').change(gerarParcelas);
 
-function gerarPersonalizado() {
-    let qtd = +$('#qtd_parcelas_personalizado').val();
-    let total = parseFloat($('#total-venda').val().replace(/\./g, '').replace(',', '.')) || 0;
-    let valorBase = Math.floor((total / qtd) * 100) / 100;
-    let resto = Math.round((total - valorBase * qtd) * 100) / 100;
-    let hoje = new Date();
-    let html = '';
-    for (let i = 0; i < qtd; i++) {
-        let valorParcela = valorBase;
-        if (i === qtd - 1) {
-            valorParcela += resto;
+function gerarPersonalizado(){
+    let qtd=+$('#qtd_parcelas_personalizado').val(), total=parseFloat($('#total-venda').val().replace(/\./g,'').replace(',','.'))||0,
+        hoje=new Date(), s='';
+    for(let i=0;i<qtd;i++){
+        let v=custom[i]?parseFloat(custom[i].valor.replace(/\./g,'').replace(',','.')):Math.floor((total/qtd)*100)/100,
+            d=custom[i]?custom[i].data:new Date(hoje.getFullYear(),hoje.getMonth()+i+1,hoje.getDate()).toISOString().slice(0,10);
+        if(!custom[i]){ 
+            let resto=Math.round((total-Math.floor((total/qtd)*100)/100*qtd)*100)/100;
+            if(i===qtd-1) v+=(resto);
         }
-        let dataVencimento = new Date(hoje);
-        dataVencimento.setMonth(hoje.getMonth() + i + 1);
-        let dataStr = dataVencimento.toISOString().split('T')[0];
-        html += `<tr>
-                    <td>${i+1}<input type="hidden" name="parcelas_personalizadas[${i}][numero]" value="${i+1}"></td>
-                    <td><input type="date" name="parcelas_personalizadas[${i}][data_vencimento]" class="form-control" value="${dataStr}"></td>
-                    <td><input type="text" data-idx="${i}" name="parcelas_personalizadas[${i}][valor]" class="form-control valor-parcela-personalizada" value="${valorParcela.toFixed(2).replace('.', ',')}"></td>
-                </tr>`;
+        s+=`<tr><td>${i+1}<input type="hidden" name="parcelas_personalizadas[${i}][numero]" value="${i+1}"></td>
+            <td><input type="date" name="parcelas_personalizadas[${i}][data_vencimento]" class="form-control" value="${d}"></td>
+            <td><input type="text" data-idx="${i}" name="parcelas_personalizadas[${i}][valor]" class="form-control valor-parcela-personalizada" value="${v.toFixed(2).replace('.',',')}"></td></tr>`;
     }
-    $('#tabela-personalizado tbody').html(html);
+    $('#tabela-personalizado tbody').html(s);
     atualizarPersonalizado();
 }
 
 $('#qtd_parcelas_personalizado').change(gerarPersonalizado);
 
 $(document).on('input','.valor-parcela-personalizada',function(){
-    atualizarPersonalizado();
-});
-
-function atualizarPersonalizado(){
-    let total = parseFloat($('#total-venda').val().replace(/\./g, '').replace(',', '.')) || 0,
-        soma = $('.valor-parcela-personalizada').toArray().reduce((a,el) => a + (parseFloat($(el).val().replace(/\./g, '').replace(',', '.')) || 0), 0),
-        falta = total - soma;
-    $('#total-parcelas-custom').text('R$ ' + soma.toFixed(2).replace('.', ','));
-    $('#falta-fechar-custom').text('R$ ' + falta.toFixed(2).replace('.', ','));
-    $('#alerta-personalizado').toggleClass('d-none', Math.abs(falta) <= 0.01);
-}
-
-$(document).on('input', '.valor-parcela-personalizada', function () {
-    let idx = +$(this).data('idx');
-    let total = parseFloat($('#total-venda').val().replace(/\./g, '').replace(',', '.')) || 0;
-    let $inputs = $('.valor-parcela-personalizada');
-    let valores = $inputs.map(function(){ return parseFloat($(this).val().replace(/\./g, '').replace(',', '.')) || 0; }).get();
-
-    let somaAntes = valores.slice(0, idx + 1).reduce((a, b) => a + b, 0);
-    let faltam = valores.length - idx - 1;
-    let saldo = total - somaAntes;
-
-    if (faltam > 0) {
-        let base = Math.floor((saldo / faltam) * 100) / 100;
-        let resto = Math.round((saldo - base * faltam) * 100) / 100;
-        for (let i = idx + 1; i < valores.length; i++) {
-            valores[i] = base + ((i === valores.length - 1) ? resto : 0);
-            $inputs.eq(i).val(valores[i].toFixed(2).replace('.', ','));
+    let idx=+$(this).data('idx');
+    let total=parseFloat($('#total-venda').val().replace(/\./g,'').replace(',','.'))||0;
+    let vals=$('.valor-parcela-personalizada').map((i,el)=>parseFloat($(el).val().replace(/\./g,'').replace(',','.'))||0).get();
+    let somaAteIdx = vals.slice(0, idx + 1).reduce((a, b) => a + b, 0);
+    let rest = vals.length - idx - 1;
+    let saldo = total - somaAteIdx;
+    if (rest > 0) {
+        let b = Math.floor((saldo / rest) * 100) / 100;
+        let d = saldo - (b * rest);
+        for (let i = idx + 1; i < vals.length; i++) {
+            vals[i] = b + ((i === vals.length - 1) ? d : 0);
+            $(`.valor-parcela-personalizada[data-idx="${i}"]`).val(vals[i].toFixed(2).replace('.',','));
         }
     }
     atualizarPersonalizado();
 });
 
+function atualizarPersonalizado(){
+    let total=parseFloat($('#total-venda').val().replace(/\./g,'').replace(',','.'))||0,
+        soma= $('.valor-parcela-personalizada').toArray().reduce((a,el)=>a + (parseFloat($(el).val().replace(/\./g,'').replace(',','.'))||0),0),
+        falta=total-soma;
+    $('#total-parcelas-custom').text('R$ '+soma.toFixed(2).replace('.',','));
+    $('#falta-fechar-custom').text('R$ '+falta.toFixed(2).replace('.',','));
+    $('#alerta-personalizado').toggleClass('d-none',Math.abs(falta)<=0.01);
+}
+
+$('#form-venda').submit(function(e){
+    if($('#forma_pagamento').val()==='Personalizado'){
+        let total=parseFloat($('#total-venda').val().replace(/\./g,'').replace(',','.'))||0,
+            soma=$('.valor-parcela-personalizada').toArray().reduce((a,el)=>a+(parseFloat($(el).val().replace(/\./g,'').replace(',','.'))||0),0);
+        if(Math.abs(total-soma)>0.01){e.preventDefault();$('#alerta-personalizado').removeClass('d-none').text('Soma das parcelas não fecha!');}
+    }
+});
+
+$(document).ready(function(){
+    atualizarTotais();
+    if($('#forma_pagamento').val()==='Parcelado'){ $('#parcelamento').show(); gerarParcelas(); }
+    if($('#forma_pagamento').val()==='Personalizado'){ $('#personalizado').show(); gerarPersonalizado(); }
+});
 </script>
 @stop

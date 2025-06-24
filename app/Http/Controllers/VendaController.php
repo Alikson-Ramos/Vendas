@@ -108,73 +108,102 @@ class VendaController extends Controller
     }
 
     public function update(Request $request, Venda $venda)
-    {
-        $request->validate([
-            'cliente_id'                             => 'nullable|exists:clientes,id',
-            'itens'                                  => 'required|array|min:1',
-            'itens.*.produto_id'                     => 'required|exists:produtos,id',
-            'itens.*.quantidade'                     => 'required|integer|min:1',
-            'itens.*.preco_unitario'                 => 'required',
-            'forma_pagamento'                        => 'required|in:Dinheiro,Cartão,Parcelado,Personalizado',
-            'parcelas'                               => 'required_if:forma_pagamento,Parcelado|array',
-            'parcelas.*.numero'                      => 'required_with:parcelas|integer|min:1',
-            'parcelas.*.data_vencimento'             => 'required_with:parcelas|date',
-            'parcelas.*.valor'                       => 'required_with:parcelas',
-            'parcelas_personalizadas'                => 'required_if:forma_pagamento,Personalizado|array',
-            'parcelas_personalizadas.*.numero'       => 'required_with:parcelas_personalizadas|integer|min:1',
-            'parcelas_personalizadas.*.data_vencimento'=> 'required_with:parcelas_personalizadas|date',
-            'parcelas_personalizadas.*.valor'        => 'required_with:parcelas_personalizadas',
-        ]);
+{
+    $request->validate([
+        'cliente_id'                             => 'nullable|exists:clientes,id',
+        'itens'                                  => 'required|array|min:1',
+        'itens.*.produto_id'                     => 'required|exists:produtos,id',
+        'itens.*.quantidade'                     => 'required|integer|min:1',
+        'itens.*.preco_unitario'                 => 'required',
+        'forma_pagamento'                        => 'required|in:Dinheiro,Cartão,Parcelado,Personalizado',
+        'parcelas'                               => 'required_if:forma_pagamento,Parcelado|array',
+        'parcelas.*.numero'                      => 'required_with:parcelas|integer|min:1',
+        'parcelas.*.data_vencimento'             => 'required_with:parcelas|date',
+        'parcelas.*.valor'                       => 'required_with:parcelas',
+        'parcelas_personalizadas'                => 'required_if:forma_pagamento,Personalizado|array',
+        'parcelas_personalizadas.*.numero'       => 'required_with:parcelas_personalizadas|integer|min:1',
+        'parcelas_personalizadas.*.data_vencimento'=> 'required_with:parcelas_personalizadas|date',
+        'parcelas_personalizadas.*.valor'        => 'required_with:parcelas_personalizadas',
+    ]);
 
-        $total = 0;
-        foreach ($request->itens as $item) {
-            $pu = floatval(str_replace(['.', ','], ['', '.'], $item['preco_unitario']));
-            $total += $pu * $item['quantidade'];
+    $total = 0;
+    foreach ($request->itens as $item) {
+        $pu = floatval(str_replace(['.', ','], ['', '.'], $item['preco_unitario']));
+        $total += $pu * $item['quantidade'];
+    }
+
+    if ($request->forma_pagamento === 'Parcelado') {
+        $somaParcelas = 0;
+        foreach ($request->parcelas as $p) {
+            $valor = floatval(str_replace(['.', ','], ['', '.'], $p['valor']));
+            if ($valor <= 0) {
+                return back()->withErrors(['Nenhuma parcela pode ser menor ou igual a zero!'])->withInput();
+            }
+            $somaParcelas += $valor;
         }
+        if (abs($total - $somaParcelas) > 0.01) {
+            return back()->withErrors(['As parcelas não somam o valor total da venda!'])->withInput();
+        }
+    }
 
-        $venda->update([
-            'cliente_id'      => $request->cliente_id,
-            'total'           => $total,
-            'forma_pagamento' => $request->forma_pagamento,
+    if ($request->forma_pagamento === 'Personalizado') {
+        $somaParcelas = 0;
+        foreach ($request->parcelas_personalizadas as $p) {
+            $valor = floatval(str_replace(['.', ','], ['', '.'], $p['valor']));
+            if ($valor <= 0) {
+                return back()->withErrors(['Nenhuma parcela pode ser menor ou igual a zero!'])->withInput();
+            }
+            $somaParcelas += $valor;
+        }
+        if (abs($total - $somaParcelas) > 0.01) {
+            return back()->withErrors(['As parcelas personalizadas não somam o valor total da venda!'])->withInput();
+        }
+    }
+
+    $venda->update([
+        'cliente_id'      => $request->cliente_id,
+        'total'           => $total,
+        'forma_pagamento' => $request->forma_pagamento,
+    ]);
+
+    $venda->itens()->delete();
+    foreach ($request->itens as $item) {
+        $pu = floatval(str_replace(['.', ','], ['', '.'], $item['preco_unitario']));
+        $venda->itens()->create([
+            'produto_id'     => $item['produto_id'],
+            'quantidade'     => $item['quantidade'],
+            'preco_unitario' => $pu,
+            'preco_total'    => $pu * $item['quantidade'],
         ]);
+    }
 
-        $venda->itens()->delete();
-        foreach ($request->itens as $item) {
-            $pu = floatval(str_replace(['.', ','], ['', '.'], $item['preco_unitario']));
-            $venda->itens()->create([
-                'produto_id'     => $item['produto_id'],
-                'quantidade'     => $item['quantidade'],
-                'preco_unitario' => $pu,
-                'preco_total'    => $pu * $item['quantidade'],
+    $venda->parcelas()->delete();
+
+    if ($request->forma_pagamento === 'Parcelado') {
+        foreach ($request->parcelas as $p) {
+            $venda->parcelas()->create([
+                'numero'          => $p['numero'],
+                'data_vencimento' => $p['data_vencimento'],
+                'valor'           => floatval(str_replace(['.', ','], ['', '.'], $p['valor'])),
             ]);
         }
-
-        $venda->parcelas()->delete();
-
-        if ($request->forma_pagamento === 'Parcelado') {
-            foreach ($request->parcelas as $p) {
-                $venda->parcelas()->create([
-                    'numero'          => $p['numero'],
-                    'data_vencimento' => $p['data_vencimento'],
-                    'valor'           => floatval(str_replace(['.', ','], ['', '.'], $p['valor'])),
-                ]);
-            }
-        }
-
-        if ($request->forma_pagamento === 'Personalizado') {
-            foreach ($request->parcelas_personalizadas as $p) {
-                $venda->parcelas()->create([
-                    'numero'          => $p['numero'],
-                    'data_vencimento' => $p['data_vencimento'],
-                    'valor'           => floatval(str_replace(['.', ','], ['', '.'], $p['valor'])),
-                ]);
-            }
-        }
-
-        return redirect()
-            ->route('vendas.index')
-            ->with('msgSuccess', 'Venda atualizada com sucesso!');
     }
+
+    if ($request->forma_pagamento === 'Personalizado') {
+        foreach ($request->parcelas_personalizadas as $p) {
+            $venda->parcelas()->create([
+                'numero'          => $p['numero'],
+                'data_vencimento' => $p['data_vencimento'],
+                'valor'           => floatval(str_replace(['.', ','], ['', '.'], $p['valor'])),
+            ]);
+        }
+    }
+
+    return redirect()
+        ->route('vendas.index')
+        ->with('msgSuccess', 'Venda atualizada com sucesso!');
+}
+
 
     public function destroy(Venda $venda)
     {

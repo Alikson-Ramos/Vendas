@@ -15,30 +15,38 @@
         </a>
     </div>
     <div class="card-body">
-        <div class="row mb-2">
-            <div class="col-md-6">
-                <strong>Cliente:</strong>
-                {{ $venda->cliente->nome ?? '-' }}
+
+        {{-- cabeçalho com resumo --}}
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <strong>Cliente:</strong> {{ $venda->cliente->nome ?? '-' }}
             </div>
-            <div class="col-md-6">
-                <strong>Vendedor:</strong>
-                {{ $venda->user->name ?? '-' }}
+            <div class="col-md-4">
+                <strong>Vendedor:</strong> {{ $venda->user->name ?? '-' }}
+            </div>
+            <div class="col-md-4">
+                <strong>Data:</strong> {{ $venda->created_at->format('d/m/Y H:i') }}
             </div>
         </div>
-        <div class="row mb-2">
-            <div class="col-md-6">
-                <strong>Data:</strong>
-                {{ $venda->created_at->format('d/m/Y H:i') }}
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <strong>Forma de Pagamento:</strong> {{ $venda->forma_pagamento }}
             </div>
-            <div class="col-md-6">
-                <strong>Forma de Pagamento:</strong>
-                {{ $venda->forma_pagamento }}
-            </div>
+            @if(in_array($venda->forma_pagamento, ['Parcelado','Personalizado']) && $venda->parcelas->count())
+                <div class="col-md-4">
+                    <strong>Qtd. Parcelas:</strong> {{ $venda->parcelas->count() }}
+                </div>
+                <div class="col-md-4">
+                    <strong>Valor Total Parcelas:</strong>
+                    R$ {{ number_format($venda->parcelas->sum('valor'), 2, ',', '.') }}
+                </div>
+            @endif
         </div>
 
         <hr>
+
         <h5>Itens da Venda</h5>
-        <table class="table table-bordered table-sm">
+        <table class="table table-bordered table-sm mb-4">
             <thead>
                 <tr>
                     <th>Produto</th>
@@ -65,7 +73,7 @@
             </tfoot>
         </table>
 
-        @if($venda->forma_pagamento == 'Parcelado' && $venda->parcelas->count())
+        @if(in_array($venda->forma_pagamento, ['Parcelado','Personalizado']) && $venda->parcelas->count())
             <hr>
             <h5>Parcelas</h5>
             <table class="table table-bordered table-sm">
@@ -84,7 +92,7 @@
                             <td>{{ \Carbon\Carbon::parse($parcela->data_vencimento)->format('d/m/Y') }}</td>
                             <td>R$ {{ number_format($parcela->valor, 2, ',', '.') }}</td>
                             <td>
-                                @if($parcela->paga)
+                                @if(!empty($parcela->paga) && $parcela->paga)
                                     <span class="badge badge-success">Paga</span>
                                 @else
                                     <span class="badge badge-warning">Em aberto</span>
@@ -93,8 +101,17 @@
                         </tr>
                     @endforeach
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" class="text-right"><b>Total das Parcelas:</b></td>
+                        <td colspan="2">
+                            <b>R$ {{ number_format($venda->parcelas->sum('valor'), 2, ',', '.') }}</b>
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         @endif
+
     </div>
     <div class="card-footer">
         <a href="{{ route('vendas.index') }}" class="btn btn-default">Voltar</a>
